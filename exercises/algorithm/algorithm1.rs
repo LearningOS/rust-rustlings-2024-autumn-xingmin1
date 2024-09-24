@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -29,13 +28,13 @@ struct LinkedList<T> {
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: PartialOrd> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: PartialOrd> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -48,6 +47,10 @@ impl<T> LinkedList<T> {
         let mut node = Box::new(Node::new(obj));
         node.next = None;
         let node_ptr = Some(unsafe { NonNull::new_unchecked(Box::into_raw(node)) });
+        self.push(node_ptr);
+    }
+
+    fn push(&mut self, node_ptr: Option<NonNull<Node<T>>>) {
         match self.end {
             None => self.start = node_ptr,
             Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = node_ptr },
@@ -69,15 +72,42 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
+    pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self {
+        //TODO
+        let mut mlist = Self {
             length: 0,
             start: None,
             end: None,
+        };
+        while 0 < list_a.length && 0 < list_b.length {
+            unsafe {
+                if list_a.start.unwrap().as_ref().val <= list_b.start.unwrap().as_ref().val {
+                    let node = list_a.start;
+                    list_a.start = node.unwrap().as_mut().next;
+                    list_a.length -= 1;
+                    mlist.push(node)
+                } else {
+                    let node = list_b.start;
+                    list_b.start = node.unwrap().as_mut().next;
+                    list_b.length -= 1;
+                    mlist.push(node)
+                }
+            }
         }
-	}
+        while 0 < list_a.length {
+            let node = list_a.start;
+            list_a.start = unsafe { node.unwrap().as_mut() }.next;
+            list_a.length -= 1;
+            mlist.push(node)
+        }
+        while 0 < list_b.length {
+            let node = list_b.start;
+            list_b.start = unsafe { node.unwrap().as_mut() }.next;
+            list_b.length -= 1;
+            mlist.push(node)
+        }
+        mlist
+    }
 }
 
 impl<T> Display for LinkedList<T>
